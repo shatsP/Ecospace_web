@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+.force-light-colors,
+.force-light-colors * {
+  /* Override Tailwind's zinc and indigo colors */
+  --tw-bg-opacity: 1 !important;
+  --tw-border-opacity: 1 !important;
+  --tw-text-opacity: 1 !important;
+
+  /* Background colors */
+  background-color: rgb(255, 255, 255) !important; /* White for root */
+  color: rgb(0, 0, 0) !important; /* Black text for readability */
+
+  /* Specific Tailwind class overrides */
+  &[class*="bg-zinc-800"] {
+    background-color: rgb(31, 41, 55) !important; /* zinc-800 */
+  }
+  &[class*="bg-zinc-900"] {
+    background-color: rgb(17, 24, 39) !important; /* zinc-900 */
+  }
+  &[class*="bg-zinc-950"] {
+    background-color: rgb(3, 7, 18) !important; /* zinc-950 */
+  }
+  &[class*="bg-indigo-600"] {
+    background-color: rgb(75, 93, 242) !important; /* indigo-600 */
+  }
+
+  /* Border colors */
+  &[class*="border-zinc-700"] {
+    border-color: rgb(55, 65, 81) !important; /* zinc-700 */
+  }
+
+  /* Text colors */
+  &[class*="text-white"] {
+    color: rgb(0, 0, 0) !important; /* Black for export */
+  }
+  &[class*="text-xs"] {
+    color: rgb(0, 0, 0) !important;
+  }
+}
