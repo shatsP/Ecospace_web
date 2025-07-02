@@ -1,4 +1,4 @@
-//electron/preload.ts
+// electron/preload.ts
 import { contextBridge, shell } from "electron";
 
 const INTENT_TO_OPTIONS: Record<string, string[]> = {
@@ -6,12 +6,12 @@ const INTENT_TO_OPTIONS: Record<string, string[]> = {
   book_taxi: ["https://www.uber.com/in/en", "https://www.olacabs.com"],
   maps: ["https://maps.google.com"],
   email: ["https://mail.google.com"],
+  play_music: ["https://www.youtube.com"], // ✅ Added YouTube for music
 };
 
 function getSmartURL(intent: string, baseURL: string, entities: Record<string, string> = {}): string {
   const safe = (val?: string) => encodeURIComponent(val || "");
   console.log(`getSmartURL called with intent=${intent}, baseURL=${baseURL}, entities=${JSON.stringify(entities)}`);
-
 
   switch (intent) {
     case "order_food": {
@@ -28,8 +28,12 @@ function getSmartURL(intent: string, baseURL: string, entities: Record<string, s
 
     case "book_taxi": {
       const destination = safe(entities.destination);
-      if (baseURL.includes("uber")) return `https://m.uber.com/?action=setPickup&drop[description]=${destination}`;
-      if (baseURL.includes("ola")) return `https://book.olacabs.com/?drop=${destination}`;
+      if (baseURL.includes("uber")) {
+        return `https://m.uber.com/?action=setPickup&drop[description]=${destination}`;
+      }
+      if (baseURL.includes("ola")) {
+        return `https://book.olacabs.com/?drop=${destination}`;
+      }
       break;
     }
 
@@ -37,19 +41,18 @@ function getSmartURL(intent: string, baseURL: string, entities: Record<string, s
       const query = safe(entities.destination || entities.food);
       return `https://www.google.com/maps/search/${query}`;
     }
+
+    case "play_music": {
+      const query = safe(entities.play);
+      return `https://www.youtube.com/results?search_query=${query}`;
+    }
   }
 
   return baseURL;
 }
 
-
 function handleIntent(intent: string, userInput: string, entities?: Record<string, string>) {
   const prefs = JSON.parse(localStorage.getItem("ecospace_defaults") || "{}");
-
-  // if (prefs[intent]) {
-  //    shell.openExternal(prefs[intent]);
-  //   return;
-  // }
 
   const urls = INTENT_TO_OPTIONS[intent];
   if (!urls) return;
@@ -69,11 +72,10 @@ function handleIntent(intent: string, userInput: string, entities?: Record<strin
 }
 
 function getKeyword(url: string) {
-  return url.match(/swiggy|zomato|uber|ola|google/)?.[0] || "";
+  return url.match(/swiggy|zomato|uber|ola|google|youtube/)?.[0] || "";
 }
 
 contextBridge.exposeInMainWorld("ecospace", {
   launchByIntent: (intent: string, input: string, entities?: Record<string, string>) =>
     handleIntent(intent, input, entities)
 });
-

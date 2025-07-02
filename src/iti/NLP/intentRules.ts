@@ -1,5 +1,9 @@
 import type { DetectedIntent } from "./types";
 
+// ✅ Converts "pink lips" → "pink+lips"
+const normalizeQuery = (text: string): string =>
+  text.trim().toLowerCase().replace(/\s+/g, "+");
+
 // Extract comma-separated tasks for planner intent
 const extractTasksFromInput = (input: string): string[] => {
   const raw = input
@@ -12,21 +16,33 @@ const extractTasksFromInput = (input: string): string[] => {
   return raw;
 };
 
-// Simple entity extraction for launch intents
+// ✅ Simple entity extraction for launch intents (with music normalized)
 const extractEntities = (input: string): Record<string, string> => {
   const entities: Record<string, string> = {};
 
-  // Food-related
+  // 🍽 Food-related
   const foodMatch = input.match(/order (.+?)(?: from| on| at|$)/i);
-  if (foodMatch) entities.food = foodMatch[1];
+  if (foodMatch) {
+    entities.food = foodMatch[1].replace(/\s+on\s+\w+$/, "").trim();
+  }
 
-  // Location-related
+  // 🎵 Music-related — now URL-normalized
+  const playMusic = input.match(/(?:play|listen to)\s+(.+)/i);
+  if (playMusic) {
+    entities.play = normalizeQuery(playMusic[1]);
+  }
+
+  // 📍 Location-related
   const locationMatch = input.match(/to (the )?(.*?)( at| by| around|$)/i);
-  if (locationMatch) entities.destination = locationMatch[2];
+  if (locationMatch) {
+    entities.destination = locationMatch[2];
+  }
 
-  // Time-related
+  // 🕒 Time-related
   const timeMatch = input.match(/at (\d{1,2}(?::\d{2})?\s?(?:am|pm)?)/i);
-  if (timeMatch) entities.time = timeMatch[1];
+  if (timeMatch) {
+    entities.time = timeMatch[1];
+  }
 
   return entities;
 };
@@ -36,26 +52,44 @@ export const detectIntent = (input: string): DetectedIntent => {
   const entities = extractEntities(input);
 
   // 🌐 SmartLauncher rules
-  if (lower.includes("order food") || lower.includes("swiggy") || lower.includes("zomato") || lower.includes("order")) {
+  if (
+    lower.includes("order food") ||
+    lower.includes("swiggy") ||
+    lower.includes("zomato") ||
+    lower.includes("order")
+  ) {
     return { intent: "launch_order_food", entities };
   }
 
-if (
-    lower.includes("book a cab") ||  // ✅ add this
-    lower.includes("book cab") || 
-    lower.includes("taxi") || 
-    lower.includes("uber") || 
-    lower.includes("ola")
-  ) {
-    return { intent: "launch_book_taxi", entities: extractEntities(lower) };
+  if (lower.includes("play") || lower.includes("listen to")) {
+    if (entities.play) {
+      return { intent: "launch_play_music", entities: extractEntities(lower) };
+    }
   }
 
+  if (
+    lower.includes("book a cab") ||
+    lower.includes("book cab") ||
+    lower.includes("taxi") ||
+    lower.includes("uber") ||
+    lower.includes("ola")
+  ) {
+    return { intent: "launch_book_taxi", entities };
+  }
 
-  if (lower.includes("map") || lower.includes("direction") || lower.includes("location")) {
+  if (
+    lower.includes("map") ||
+    lower.includes("direction") ||
+    lower.includes("location")
+  ) {
     return { intent: "launch_maps", entities };
   }
 
-  if (lower.includes("email") || lower.includes("gmail") || lower.includes("check mail")) {
+  if (
+    lower.includes("email") ||
+    lower.includes("gmail") ||
+    lower.includes("check mail")
+  ) {
     return { intent: "launch_email" };
   }
 
@@ -68,11 +102,19 @@ if (
     return { intent: "open_notes" };
   }
 
-  if (lower.includes("timer") || lower.includes("remind me in") || lower.includes("remind")) {
+  if (
+    lower.includes("timer") ||
+    lower.includes("remind me in") ||
+    lower.includes("remind")
+  ) {
     return { intent: "open_timer" };
   }
 
-  if (lower.includes("planner") || lower.includes("schedule") || lower.includes("plan")) {
+  if (
+    lower.includes("planner") ||
+    lower.includes("schedule") ||
+    lower.includes("plan")
+  ) {
     return { intent: "open_planner" };
   }
 

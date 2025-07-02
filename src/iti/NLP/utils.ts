@@ -46,6 +46,14 @@ export const extractEntities = (input: string): Record<string, any> => {
     entities.destination = destinationMatch[1].trim();
   }
 
+  // 🎵 Music extraction (add this)
+  const musicMatch = input.match(/(?:play|listen to)\s+(.+)/i);
+  if (musicMatch) {
+    // Replace spaces with + for URL encoding
+    entities.play = musicMatch[1].trim().replace(/\s+/g, "+");
+  }
+
   return entities;
 };
+
 

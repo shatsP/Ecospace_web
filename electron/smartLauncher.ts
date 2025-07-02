@@ -9,6 +9,7 @@ const INTENT_TO_OPTIONS: Record<string, string[]> = {
   book_taxi: ["https://www.uber.com/in/en", "https://www.olacabs.com"],
   maps: ["https://maps.google.com"],
   email: ["https://mail.google.com"],
+  play_music: ["https://www.youtube.com"], // ✅ Added default platform
 };
 
 function readPrefs(): Record<string, string> {
@@ -23,35 +24,41 @@ function writePrefs(prefs: Record<string, string>) {
   fs.writeFileSync(PREFS_FILE, JSON.stringify(prefs, null, 2));
 }
 
-// 🧠 New: Smart URL manipulation based on intent + entities
+// 🧠 Smart URL generation based on intent + entities
 function getSmartURL(intent: string, baseURL: string, entities: Record<string, string> = {}): string {
+  const safe = (val?: string) => encodeURIComponent(val || "");
 
   switch (intent) {
     case "launch_order_food": {
-      const query = entities.food || "";
+      const query = safe(entities.food);
       if (baseURL.includes("swiggy.com")) {
-        return `https://www.swiggy.com/search?query=${encodeURIComponent(query)}`;
+        return `https://www.swiggy.com/search?query=${query}`;
       }
       if (baseURL.includes("zomato.com")) {
-        return `https://www.zomato.com/search?query=${encodeURIComponent(query)}`;
+        return `https://www.zomato.com/aligarh/delivery/dish-${query}`;
       }
       break;
     }
 
     case "launch_book_taxi": {
-      const destination = entities.destination || "";
+      const destination = safe(entities.destination);
       if (baseURL.includes("uber.com")) {
-        return `https://m.uber.com/?action=setPickup&drop[description]=${encodeURIComponent(destination)}`;
+        return `https://m.uber.com/?action=setPickup&drop[description]=${destination}`;
       }
       if (baseURL.includes("olacabs.com")) {
-        return `https://book.olacabs.com/?drop=${encodeURIComponent(destination)}`;
+        return `https://book.olacabs.com/?drop=${destination}`;
       }
       break;
     }
 
     case "launch_maps": {
-      const place = entities.destination || entities.food || "";
-      return `https://www.google.com/maps/search/${encodeURIComponent(place)}`;
+      const place = safe(entities.destination || entities.food);
+      return `https://www.google.com/maps/search/${place}`;
+    }
+
+    case "launch_play_music": {
+      const song = safe(entities.play);
+      return `https://www.youtube.com/results?search_query=${song}`;
     }
   }
 
@@ -68,7 +75,8 @@ export function handleIntent(intent: string, userInput: string, entities?: Recor
     return;
   }
 
-  const urls = INTENT_TO_OPTIONS[intent.replace("launch_", "")];
+  const baseKey = intent.replace("launch_", "");
+  const urls = INTENT_TO_OPTIONS[baseKey];
   if (!urls || urls.length === 0) return;
 
   const matched = urls.find(url =>
@@ -89,5 +97,6 @@ function getKeyword(url: string): string {
   if (url.includes("uber")) return "uber";
   if (url.includes("ola")) return "ola";
   if (url.includes("google")) return "google";
+  if (url.includes("youtube")) return "youtube";
   return "";
 }
